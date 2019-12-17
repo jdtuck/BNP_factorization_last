@@ -1,21 +1,21 @@
-
+using SparseArrays
 # Define the type of the sparse factorized graph
-if isdefined(:Factorized) == false
+#if @isdefined :Factorized == false
   #typealias Factorized{T} Dict{Int,SparseMatrixCSC{T,Int}}
   Factorized{T} = Dict{Int,SparseMatrixCSC{T,Int}}
-end
+#end
 
 # Define the type of the count vectors
-if isdefined(:Count) == false
+#if isdefined(:Count) == false
   #typealias Count Dict{Int,Array{Int,1}}
   const Count = Dict{Int,Array{Int,1}}
-end
+#end
 
 # Define the type of the affinity vectors
-if isdefined(:Affinity) == false
+#if isdefined(:Affinity) == false
   #typealias Affinity Dict{Int,Array{Float64,1}}
   const Affinity = Dict{Int,Array{Float64,1}}
-end
+#end
 
 """
   Create a dict to store the sparse factorization of the graph
