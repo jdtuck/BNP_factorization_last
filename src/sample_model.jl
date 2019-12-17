@@ -40,7 +40,7 @@ function active_adjacency(r::Float64,
                           truncLevel::Float64 = 0.,
                           maxIter::Int64 = 10^8)
   n = length(v)
-  adjacency_matrix = Array{Int}(n,n)
+  adjacency_matrix = Array{Int}(undef,n,n)
   if truncLevel > 0
     v = [x > truncLevel ? x : 0 for x in v]
   end
@@ -57,7 +57,7 @@ function active_adjacency(r::Float64,
     end
   end
   if empty == false
-    p_vect = reshape((1./s^2)*v*transpose(v),n^2)
+    p_vect = reshape((1.0/s^2)*v*transpose(v),n^2)
     mult_dist = Multinomial(weight,p_vect)
     mult = rand(mult_dist)
     adjacency_matrix = reshape(mult,(n,n))
@@ -92,10 +92,10 @@ function generate_model_(n::Int = 10,
   K = rand(Poisson(active_mean))
   # Affinity matrix
   #V = Array(Float64,(n,K))
-  V = Array{Float64}((n,K))
+  V = Array{Float64}(undef,(n,K))
   # Activity of the communities
   #R = Array(Float64,K)
-  R = Array{Float64}(K)
+  R = Array{Float64}(undef,K)
   # Factorized adjacency matrix
   Z = init_factorized(n,K)
   # Distribution of the affinities

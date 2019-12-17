@@ -1,6 +1,6 @@
 using Distributions
-using PyCall
-@pyimport scipy.special as scp
+using QuadGK
+using SpecialFunctions
 
 """
   Logarithm of a multinomial beta function
@@ -42,8 +42,8 @@ function expectation_gamma(tau::Float64,
     x_min = 0
     x_max = Inf
   else
-    gamma_dist_1 = Gamma(alpha+2*sigma,1./beta)
-    gamma_dist_2 = Gamma(alpha,1./beta)
+    gamma_dist_1 = Gamma(alpha+2*sigma,1.0/beta)
+    gamma_dist_2 = Gamma(alpha,1.0/beta)
     x_min = min(quantile(gamma_dist_1,0.00001),quantile(gamma_dist_2,0.00001))
     x_max = max(cquantile(gamma_dist_1,0.00001),cquantile(gamma_dist_2,0.00001))
   end
@@ -67,8 +67,8 @@ end
 """
 function gamma_pdf(x::Float64,
                   alpha::Float64 = 0.1,
-                  beta::Float64 = 1.)
-  return pdf(Gamma(alpha,1./beta),x)
+                  beta::Float64 = 1.0)
+  return pdf(Gamma(alpha,1.0/beta),x)
 end
 
 
@@ -88,10 +88,10 @@ function upper_inc_gamma(s::Float64,
     error("The parameter s = $s must be larger than -1,")
   end
   if s < 1e-6
-    gamma_dist = Gamma(1.+s,1.)
-    return -1./s*(x^s*exp(-x)+gamma(1.+s)*(cdf(gamma_dist,x)-1.))
+    gamma_dist = Gamma(1.0+s,1.0)
+    return -1.0/s*(x^s*exp(-x)+gamma(1.0+s)*(cdf(gamma_dist,x)-1.0))
   else
-    gamma_dist = Gamma(s,1.)
+    gamma_dist = Gamma(s,1.0)
     return gamma(s)*(1-cdf(gamma_dist,x))
   end
 end
@@ -106,9 +106,9 @@ end
 """
 function rand_rejection(q::Function,
                         alpha::Float64 = .1,
-                        beta::Float64 = 2.,
+                        beta::Float64 = 2.0,
                         maxIter::Int64 = 10^9)
-  prop_dist = Gamma(alpha,1./beta)
+  prop_dist = Gamma(alpha,1.0/beta)
   for t in 1:maxIter
     x_prop = rand(prop_dist)
     u = rand(Uniform())
@@ -134,7 +134,7 @@ end
   Returns:
     N: (array) Jumps of the GGP
 """
-function rnd_GGP_jumps(kappa::Float64 = 1.,
+function rnd_GGP_jumps(kappa::Float64 = 1.0,
                       tau::Float64 = 3.2,
                       sigma::Float64 = 0.5,
                       s::Float64 = 1e-6,
@@ -155,7 +155,7 @@ function rnd_GGP_jumps(kappa::Float64 = 1.,
   N = Array{Float64,1}()
   count = 0
   # Case when the CRM is finite activity (sigma < 0)
-  if sigma < 0.
+  if sigma < 0.0
     rate = -kappa/(sigma*tau^(-sigma))
     Njumps = rand(Poisson(rate))
     untrunc_N = rand(Gamma(-sigma,tau),Njumps)
@@ -190,7 +190,7 @@ function rnd_GGP_jumps(kappa::Float64 = 1.,
       if sigma == 0
         log_r = rand()*log(T/s)+log(s)
       else
-        log_r = -1./sigma*log( s^(-sigma) - (s^(-sigma) - T^(-sigma))*rand() )
+        log_r = -1.0/sigma*log( s^(-sigma) - (s^(-sigma) - T^(-sigma))*rand() )
       end
       if log(rand()) < -tau*exp(log_r)
         push!(N,exp(log_r))
@@ -221,7 +221,7 @@ function rnd_GGP_jumps(kappa::Float64 = 1.,
   log_cst = log(kappa) - log(gamma(1-sigma)) - log(tau)
   for i in (count+1):maxIter
     log_r = log(-log(rand()))
-    log_G = log_cst - (1.+sigma) * log(t) - tau*t
+    log_G = log_cst - (1.0+sigma) * log(t) - tau*t
     if log_r > log_G
       completed = true
       break
@@ -308,7 +308,7 @@ function rand_ztpoisson(p::Float64)
     while true
       u = rand()
       res = rand(poisson_dist)
-      if u < 1./(res+1)
+      if u < 1.0/(res+1)
         return res + 1
       end
     end

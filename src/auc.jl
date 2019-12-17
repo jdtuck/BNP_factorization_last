@@ -106,8 +106,8 @@ function auc_pr(scores::Array{Float64,1}, classes::Array{Int64,1})
 
     tn, fn, tp, fp = 0, 0, num_pos, num_neg
 
-    p = Array(Float64, num_scores)
-    r = Array(Float64, num_scores)
+    p = Array{Float64}(undef,num_scores)
+    r = Array{Float64}(undef,num_scores)
     p[num_scores] = tp/(tp+fp)
     r[num_scores] = tp/(tp+fn)
     auprc, prev_r = 0.0, r[num_scores]

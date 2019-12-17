@@ -13,17 +13,17 @@
 include("src/main.jl")
 
 using ProgressMeter
-using HDF5, JLD
+using HDF5, JLD, DelimitedFiles, Dates, LinearAlgebra, Profile
 
 #-------------------------------------------------------------------------------
 # Data
 #-------------------------------------------------------------------------------
 #data_name = "Email-Enron"
-#data_name = "polblogs"
+data_name = "polblogs"
 #data_name = "wikipedia_3000"
 #data_name = "NIPS234"
 #data_name = "deezer_RO_und"
-data_name ="data_for_sigma_800"
+#data_name ="data_for_sigma_800"
 
 # Result folder name
 result_folder = "sigma 025"
@@ -61,7 +61,7 @@ n_iter = 10000
 # Thinning the chain, store only every skip iteration
 skip = 50
 # Number of iterations as burn-in
-burn = floor(Int,2.*n_iter/4)
+burn = floor(Int,2.0*n_iter/4)
 # Number of activities to store
 K = 10
 
@@ -275,7 +275,7 @@ end
 @time to_predict = sparse(I_pred,J_pred,ones(Int64,n_to_predict),n,n)
 I_pred,J_pred = findnz(to_predict)
 n_to_predict = length(I_pred)
-v_true = Array{Int64}(n_to_predict)
+v_true = Array{Int64}(undef,n_to_predict)
 is_test = zeros(Int64,n_to_predict)
 println("Mask corresponding entries")
 @time for t in 1:n_to_predict
@@ -299,9 +299,9 @@ println("Mask corresponding entries")
   end
 end
 n_to_predict = sum(is_test)
-to_predict = sparse(I_pred[find(is_test)], J_pred[find(is_test)], ones(Int64,n_to_predict),n,n)
+to_predict = sparse(I_pred[findall(is_test)], J_pred[findall(is_test)], ones(Int64,n_to_predict),n,n)
 I_pred,J_pred = findnz(to_predict)
-v_true = v_true[find(is_test)]
+v_true = v_true[findall(is_test)]
 I_tilde,J_tilde,V_tilde = findnz(Z_tilde)
 Z_tilde = sparse(I_tilde,J_tilde,V_tilde,n,n)
 # Vecor with integer predictions
@@ -311,7 +311,7 @@ pred_average_vect = zeros(Float64,n_to_predict)
 pred_average_vect_burn = zeros(Float64,n_to_predict)
 
 # Sparse matrix of observed entries and the ones to predict
-I_all,J_all,V_all = findnz(Z_tilde+to_predict+speye(Int64,n))
+I_all,J_all,V_all = findnz(Z_tilde+to_predict+sparse(I,n,n))
 all_ind_mat = dropzeros(sparse(I_all,J_all,ones(Int,length(I_all)),n,n))
 println()
 
@@ -320,11 +320,11 @@ if warm_start == false
   partition_ = Factorized{Bool}()
   sentAndReceived_ = Count()
   partition_[1] = Z_tilde
-  sentAndReceived_[1] = reshape(sum(Z_tilde,1),n) + reshape(sum(Z_tilde,2),n)
+  sentAndReceived_[1] = reshape(sum(Z_tilde,dims=1),n) + reshape(sum(Z_tilde,dims=2),n)
 else
   K_init = trunc(Int,active_feature_mean(n, c_kappa, c_tau, c_sigma, c_alpha, c_beta))+1
   s_min_init = Inf
-  r_dist_init = Gamma(1.-c_sigma,1./c_tau)
+  r_dist_init = Gamma(1.0-c_sigma,1.0/c_tau)
   R_ = zeros(K_init)
   for k in 1:K_init
     R_[k] = rand(r_dist_init)
@@ -344,12 +344,19 @@ end
 # Starting the MCMC iterations
 #-------------------------------------------------------------------------------
 println(string("Starting Gibbs sample with ",n_iter," steps"))
-tic()
 @profile @showprogress for i in 1:n_iter
 
     #FIXED_SIGMA = (i < n_iter/4)
 
     # Update measure
+    global partition_
+    global sentAndReceived_
+    global c_kappa
+    global c_sigma
+    global c_tau
+    global c_alpha
+    global c_beta
+    global pred_average_vect
     R_,V_,n_observed,slice_matrix,s_min = update_measure(partition_,sentAndReceived_,all_ind_mat,c_kappa,c_tau,c_sigma,c_alpha,c_beta)
 
     # Update partition
@@ -435,7 +442,7 @@ tic()
     print_each = floor(Int,n_iter/20)
     # If monitoring sigma
     if monitoring_sigma && i%print_each == 0
-      println(string("Progress: ", 100.*i/n_iter,"%"))
+      println(string("Progress: ", 100.0*i/n_iter,"%"))
       println(string("Current sigma: ",c_sigma))
       println(string("Length R: ",length(R_)))
 
@@ -480,7 +487,6 @@ V_ = Affinity()
 for k in 1:n_observed
   V_[k] = V_t[k]
 end
-elapsed_time = toc()
 
 #-------------------------------------------------------------------------------
 # Saving main variables
@@ -506,7 +512,6 @@ open(results_path*"info.txt","w") do f
   write(f,string("  warm_start = ", warm_start,"\n\n"))
 
   write(f,string("Number of iterations = ", n_iter*skip,"\n"))
-  write(f,string("Time  = ", elapsed_time," s \n\n"))
 
   write(f,string("Comments : ", comments,"\n"))
 end

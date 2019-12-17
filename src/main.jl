@@ -30,7 +30,7 @@ function rand_observed_community(sentAndReceived::Array{Int,1},
 
   # Sample sum_v = |v|_1 from posterior
   # total_weight is n_c in the notes
-  total_weight = 1./2*sum(sentAndReceived)
+  total_weight = 1.0/2*sum(sentAndReceived)
   log_scaled_target(x) = (2*total_weight-2*sigma)*log(x)
 
   log_scaled_prop(x) = (total_weight-sigma)*log(tau+x^2)
@@ -42,7 +42,7 @@ function rand_observed_community(sentAndReceived::Array{Int,1},
   end
 
   # Sample r from posterior (activity of the community)
-  r_dist = Gamma(total_weight-sigma,1./(sum_v^2+tau))
+  r_dist = Gamma(total_weight-sigma,1.0/(sum_v^2+tau))
   r = rand(r_dist)
 
   # Sample v from posterior
@@ -264,7 +264,7 @@ function update_partition_unweighted(activities::Array{Float64,1},
     end
   end
   for k in keys(sentAndReceived)
-    partition[k] = sparse(partition_I_[k],partition_J_[k],trues(partition_I_[k]),n,n)
+    partition[k] = sparse(partition_I_[k],partition_J_[k],trues(size(partition_I_[k])),n,n)
   end
   return partition,sentAndReceived
 end
@@ -414,7 +414,7 @@ function update_measure(partition::Factorized{Bool},
     for v_act in var_activities
       p_accept = exp(-n*alpha*log(1+2*v_act*sqrt(tau)/beta))
       if rand(Bernoulli(p_accept)) == 1
-        sum_v_dist = Gamma(n*alpha,1./(beta+2*v_act*sqrt(tau)))
+        sum_v_dist = Gamma(n*alpha,1.0/(beta+2*v_act*sqrt(tau)))
         sum_v = rand(sum_v_dist)
         p_accept = exp(-v_act*(sum_v-sqrt(tau))^2)
         if rand(Bernoulli(p_accept)) == 1
@@ -484,8 +484,8 @@ function update_parameters_neg2(current_kappa::Float64,
   if FIXED_SIGMA
     prop_sigma = current_sigma
   else
-    transf_sigma = LogNormal(log(1.-4.*current_sigma),sigma_sigma) # Change scale sigma
-    prop_sigma = (1.-rand(transf_sigma))/4. # Change scale sigma
+    transf_sigma = LogNormal(log(1.0-4.0*current_sigma),sigma_sigma) # Change scale sigma
+    prop_sigma = (1.0-rand(transf_sigma))/4.0 # Change scale sigma
   end
   if FIXED_ALPHA
     prop_alpha = current_alpha
@@ -504,14 +504,14 @@ function update_parameters_neg2(current_kappa::Float64,
   sum_log_aff = sum( [ sum(log.(v)) for (k,v) in affinities ] )
   sum_aff = sum( [ sum(v) for (k,v) in affinities ] )
 
-  log_accept_sigma = a_sigma*(log(1-4.*prop_sigma)-log(1-4.*current_sigma)) +
-                    4.*b_sigma*(prop_sigma-current_sigma) -
+  log_accept_sigma = a_sigma*(log(1-4.0*prop_sigma)-log(1-4.0*current_sigma)) +
+                    4.0*b_sigma*(prop_sigma-current_sigma) -
                     n_jumps*log( gamma(1-prop_sigma)/gamma(1-current_sigma) ) -
                     (prop_sigma-current_sigma)*sum(log.(activities)) # Change scale sigma
   log_accept_tau = a_tau*log(prop_tau/current_tau) -
                   (b_tau+sum(activities))*(prop_tau-current_tau)
   if prop_alpha == current_alpha
-    log_accept_alpha = 0.
+    log_accept_alpha = 0.0
   # Warning ! Approximation, if alpha is too small (typically around 0.001),
   # then some affiliations are approximated to 0. due to machine precision.
   # If it happens, then only accept a larger alpha
@@ -534,13 +534,13 @@ function update_parameters_neg2(current_kappa::Float64,
 
   # If n*alpha/beta is too small, then integrating from 0 to Inf can lead to computation errors
   if n*current_alpha/current_beta < 1e7#1e-4
-    gamma_dist_c = Gamma(n*current_alpha,1./current_beta)
+    gamma_dist_c = Gamma(n*current_alpha,1.0/current_beta)
     x_min_c = quantile(gamma_dist_c,0.00000001)
     x_max_c = cquantile(gamma_dist_c,0.00000001)
   else
     # x_min_c = 0 # Warning
     # x_max_c = Inf # Warning
-    gamma_dist_c = Gamma(n*current_alpha,1./current_beta)
+    gamma_dist_c = Gamma(n*current_alpha,1.0/current_beta)
     x_min_c = quantile(gamma_dist_c,0.00000001)
     x_max_c = cquantile(gamma_dist_c,0.00000001)
   end
@@ -563,13 +563,13 @@ function update_parameters_neg2(current_kappa::Float64,
 
 
   if n*prop_alpha/prop_beta < 1e7#1e-4
-    gamma_dist_p = Gamma(n*prop_alpha,1./prop_beta)
+    gamma_dist_p = Gamma(n*prop_alpha,1.0/prop_beta)
     x_min_p = quantile(gamma_dist_p,0.00000001)
     x_max_p = cquantile(gamma_dist_p,0.00000001)
   else
     # x_min_p = 0 # Warning
     # x_max_p = Inf # Warning
-    gamma_dist_p = Gamma(n*prop_alpha,1./prop_beta)
+    gamma_dist_p = Gamma(n*prop_alpha,1.0/prop_beta)
     x_min_p = quantile(gamma_dist_p,0.00000001)
     x_max_p = cquantile(gamma_dist_p,0.00000001)
   end
@@ -619,7 +619,7 @@ function update_parameters_neg2(current_kappa::Float64,
     current_alpha = prop_alpha
     current_beta = prop_beta
   end
-  current_kappa = rand(Gamma(n_jumps+a_kappa,1./(int_current/gamma(1-current_sigma)+b_kappa)))
+  current_kappa = rand(Gamma(n_jumps+a_kappa,1.0/(int_current/gamma(1-current_sigma)+b_kappa)))
 
   if current_kappa > 5000
     println(current_kappa)
@@ -996,7 +996,7 @@ function partition_to_predict_edge(i_::Int64,
   if max_log_mass_min >= 0
     p_edge_nzero = exp(-sum_p_-max_log_mass_min)/( exp(-sum_p_-max_log_mass_min) + sum_mass_min )
   else
-    p_edge_nzero = 1./( 1. + sum_mass_min*exp(sum_p_ + max_log_mass_min) )
+    p_edge_nzero = 1.0/( 1. + sum_mass_min*exp(sum_p_ + max_log_mass_min) )
   end
   is_edge_nzero = try rand(Bernoulli(p_edge_nzero))
   catch
@@ -1149,7 +1149,7 @@ function sample_unobs_measure(n::Int64 = 10,
   for v_act in var_activities
     p_accept = exp(-n*alpha*log(1+2*v_act*sqrt(tau)/beta))
     if rand(Bernoulli(p_accept)) == 1
-      sum_v_dist = Gamma(n*alpha,1./(beta+2*v_act*sqrt(tau)))
+      sum_v_dist = Gamma(n*alpha,1.0/(beta+2*v_act*sqrt(tau)))
       sum_v = rand(sum_v_dist)
       p_accept = exp(-v_act*(sum_v-sqrt(tau))^2)
       if rand(Bernoulli(p_accept)) == 1
@@ -1161,7 +1161,7 @@ function sample_unobs_measure(n::Int64 = 10,
 
   k_reject_2 = 0
   sum_reject_2 = 0.
-  sum_v_dist = Gamma(n*alpha,1./beta)
+  sum_v_dist = Gamma(n*alpha,1.0/beta)
   for v_act in var_activities
     sum_v = rand(sum_v_dist)
     p_accept = exp(-v_act*(tau+sum_v^2))
@@ -1219,14 +1219,14 @@ function sample_obs_community(n::Int = 1000,
   end
 
   # Sample r from posterior (activity of the community)
-  r_dist = Gamma(total_weight-sigma,1./(sum_v^2+tau))
+  r_dist = Gamma(total_weight-sigma,1.0/(sum_v^2+tau))
   r_cond = rand(r_dist)
   sum_v_cond = sum_v
 
   # 2D Rejection strategy
   niter_rejec = 0
   r_bar_dist = Gamma(total_weight-sigma,1)
-  sum_v_dist = Gamma(n*alpha+2*sigma,1./beta)
+  sum_v_dist = Gamma(n*alpha+2*sigma,1.00/beta)
   r_rejec = 0.
   sum_v_rejec = 0.
   while true

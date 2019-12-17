@@ -1,5 +1,5 @@
 using PyPlot
-
+using Random
 
 
 function spy_sparse(spMatrix,directed=true)
@@ -84,14 +84,14 @@ end
 function cluster_communities(activities, affinities)
   k = length(activities)
   n = length(affinities[1])
-  max_idx = indmax(activities)
+  max_idx = argmax(activities)
   #order_idx = sortperm(affinities[max_idx])
   order_idx = randperm(n)
   clusters = Dict{Int,Array{Int64,1}}()
   for x in order_idx
     #weights = [sqrt(activities[c])*affinities[c][x] for c in 1:k]
     weights = [activities[c]*affinities[c][x] for c in 1:k]
-    c_x = indmax(weights)
+    c_x = argmax(weights)
     if haskey(clusters,c_x) == false
       clusters[c_x] = Int[]
     end
@@ -109,7 +109,7 @@ function plot_communitites_degree(sentAndReceived::Count,nbins::Int64=30)
   t = 1
   degrees = zeros(Int64,k_n)
   for (k,sAr) in sentAndReceived
-    degrees[k] = 1./2*sum(sAr)
+    degrees[k] = 1.0/2*sum(sAr)
     t += 1
   end
   figure()

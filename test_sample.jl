@@ -9,6 +9,7 @@ include("src/main.jl")
 
 using HDF5, JLD
 using LightGraphs
+using DelimitedFiles
 
 #-------------------------------------------------------------------------------
 # Set parameters
@@ -87,7 +88,7 @@ while true
       write(f,"Dataset:\n")
       write(f,string("  name = ", data_name,"\n"))
       write(f,string("  number of nodes = ", n,"\n"))
-      write(f,string("  number of edges = ", sum(sparse_data),"\n"))
+      write(f,string("  number of edges = ", ne(G),"\n"))
       write(f,string("  directed = true","\n"))
       write(f,string("  weighted = false","\n\n"))
 
