@@ -105,10 +105,10 @@ println()
 
 # Inference on the community with higher activity
 println("Inference on the community with higher activity")
-c = indmax(R)
+c = argmax(R)
 Z_c = Z[c]
-sent = vec(sum(Z_c,2))
-received = vec(sum(Z_c,1))
+sent = vec(sum(Z_c,dims=2))
+received = vec(sum(Z_c,dims=1))
 @time rand_observed_community(sent+received,
                               tau,sigma,alpha,beta)
 
@@ -116,7 +116,8 @@ r,v = rand_observed_community(sent+received,
                               tau,sigma,alpha,beta)
 println()
 
-
+# Debugging Variables
+PRINT_ = false
 # Update the GGP and slice variables
 println("One step update of the variables")
 Z_ = complete_graph(Z)
@@ -134,7 +135,7 @@ sentAndReceived_ = Count()
   I_,J_,V_ = findnz(Z[k])
   V_s = [(v_ > 0) for v_ in V_]
   partition_[k] = sparse(I_,J_,V_s,n,n)
-  sentAndReceived_[k] = reshape(sum(Z[k],1),n) + reshape(sum(Z[k],2),n)
+  sentAndReceived_[k] = reshape(sum(Z[k],dims=1),n) + reshape(sum(Z[k],dims=2),n)
 end
 
 # Update measure
@@ -172,7 +173,7 @@ println("Select $n_to_predict indices to predict")
 @time to_predict = sparse(rand(1:n,n_to_predict),rand(1:n,n_to_predict),ones(Int64,n_to_predict),n,n)
 I_pred,J_pred = findnz(to_predict)
 n_to_predict = length(I_pred)
-v_true = Array{Int64}(n_to_predict)
+v_true = Array{Int64}(undef,n_to_predict)
 println("Mask corresponding entries")
 @time for t in 1:n_to_predict
   i_pred = I_pred[t]
@@ -254,10 +255,11 @@ if warm_start == false
 else
   K_init = trunc(Int,active_feature_mean(n, c_kappa, c_tau, c_sigma, c_alpha, c_beta))+1
   s_min_init = Inf
-  r_dist_init = Gamma(1.-c_sigma,1./c_tau)
+  r_dist_init = Gamma(1.0-c_sigma,1.0/c_tau)
   R_ = zeros(K_init)
   V_ = Affinity()
   for k in 1:K_init
+    global s_min_init
     R_[k] = rand(r_dist_init)
     V_[k] = c_alpha/c_beta*ones(n)
     s_min_init = min(s_min_init,R_[k])

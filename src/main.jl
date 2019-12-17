@@ -157,7 +157,7 @@ function update_partition(activities::Array{Float64,1},
     end
   end
   for k in keys(sentAndReceived)
-    partition[k] = sparse(partition_I_[k],partition_J_[k],trues(partition_I_[k]),n,n)
+      partition[k] = sparse(partition_I_[k],partition_J_[k],trues(size(partition_I_[k])),n,n)
   end
   return partition,sentAndReceived
 end
