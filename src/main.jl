@@ -4,6 +4,7 @@ include("sampling_tools.jl")
 include("plot_tools.jl")
 include("sample_model.jl")
 include("auc.jl")
+include("expint.jl")
 
 
 
@@ -376,7 +377,7 @@ function update_measure(partition::Factorized{Bool},
   if abs(sigma) > 1e-8
     change_var_exp = kappa_tilde*upper_inc_gamma(-sigma,tau*s_min)/gamma(1-sigma)
   else
-    change_var_exp = kappa_tilde*scp.exp1(tau*s_min)
+    change_var_exp = kappa_tilde*expint(tau*s_min)
   end
 
   # Compute expected number of iterations with rejection strategy
@@ -547,9 +548,9 @@ function update_parameters_neg2(current_kappa::Float64,
   # If current_sigma is to close to zero, use the approximation current_sigma = 0
   # to avoid computational errors
   if abs(current_sigma) < 1e-4
-    #int_current = quadgk(x-> ( log(current_tau+x^2) + scp.exp1((current_tau+x^2)*s_min) )*gamma_pdf(x,n*current_alpha,current_beta),
+    #int_current = quadgk(x-> ( log(current_tau+x^2) + expint((current_tau+x^2)*s_min) )*gamma_pdf(x,n*current_alpha,current_beta),
     #                    x_min_c,x_max_c)[1] - log(current_tau)
-    int_current = quadgk(x-> exp( log(log(current_tau+x^2) + scp.exp1((current_tau+x^2)*s_min) ) +
+    int_current = quadgk(x-> exp( log(log(current_tau+x^2) + expint((current_tau+x^2)*s_min) ) +
                                log(gamma_pdf(x,n*current_alpha,current_beta)) ),
                       x_min_c,x_max_c)[1] - log(current_tau)
   else
@@ -576,9 +577,9 @@ function update_parameters_neg2(current_kappa::Float64,
   # If prop_sigma is to close to zero, use the approximation prop_sigma = 0
   # to avoid computational errors
   if abs(prop_sigma) < 1e-4
-    #int_prop = quadgk(x-> ( log(prop_tau+x^2) + scp.exp1((prop_tau+x^2)*s_min) )*gamma_pdf(x,n*prop_alpha,prop_beta),
+    #int_prop = quadgk(x-> ( log(prop_tau+x^2) + expint((prop_tau+x^2)*s_min) )*gamma_pdf(x,n*prop_alpha,prop_beta),
     #                    x_min_p,x_max_p)[1] - log(prop_tau)
-    int_prop = quadgk(x-> exp( log(log(prop_tau+x^2) + scp.exp1((prop_tau+x^2)*s_min) ) +
+    int_prop = quadgk(x-> exp( log(log(prop_tau+x^2) + expint((prop_tau+x^2)*s_min) ) +
                                log(gamma_pdf(x,n*prop_alpha,prop_beta)) ),
                       x_min_p,x_max_p)[1] - log(prop_tau)
   else
@@ -1107,7 +1108,7 @@ function sample_unobs_measure(n::Int64 = 10,
   if abs(sigma) > 1e-8
     change_var_exp = kappa_tilde*upper_inc_gamma(-sigma,tau*s_min)/gamma(1-sigma)
   else
-    change_var_exp = kappa_tilde*scp.exp1(tau*s_min)
+    change_var_exp = kappa_tilde*expint(tau*s_min)
   end
 
   # Compute expected number of iterations with rejection strategy
