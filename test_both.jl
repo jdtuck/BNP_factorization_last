@@ -26,7 +26,7 @@ n=400;kappa=1.5;tau=.6;sigma=0.17;alpha=.015;beta=.05
 pred_ratio = 0.
 
 # Parameters of the Gibbs sampler
-warm_start = true
+warm_start = false
 
 # Plot true values
 plot_true = true
@@ -62,7 +62,7 @@ FIXED_KAPPA = false
 FIXED_SIGMA = false
 FIXED_TAU = false
 FIXED_ALPHA = false
-FIXED_BETA = true
+FIXED_BETA = false
 
 #-------------------------------------------------------------------------------
 # Sample from model
@@ -251,7 +251,7 @@ if warm_start == false
   I_,J_,V_ = findnz(Z_tilde)
   V_s = [(v_ > 0) for v_ in V_]
   partition_[1] = sparse(I_,J_,V_s,n,n)
-  sentAndReceived_[1] = reshape(sum(Z_tilde,1),n) + reshape(sum(Z_tilde,2),n)
+  sentAndReceived_[1] = reshape(sum(Z_tilde,dims=1),n) + reshape(sum(Z_tilde,dims=2),n)
 else
   K_init = trunc(Int,active_feature_mean(n, c_kappa, c_tau, c_sigma, c_alpha, c_beta))+1
   s_min_init = Inf
@@ -269,6 +269,16 @@ else
 end
 
 @showprogress for i in 1:n_iter
+  global partition_
+  global sentAndReceived_
+  global c_kappa
+  global c_sigma
+  global c_tau
+  global c_alpha
+  global c_beta
+  global pred_average_vect
+  global pred_average_vect_burn
+
   # Update measure
   R_,V_,n_observed,slice_matrix,s_min = update_measure(partition_,sentAndReceived_,all_ind_mat,c_kappa,c_tau,c_sigma,c_alpha,c_beta)
 

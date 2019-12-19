@@ -358,6 +358,7 @@ println(string("Starting Gibbs sample with ",n_iter," steps"))
     global c_beta
     global pred_average_vect
     global pred_average_vect_burn
+    global idx_clustering
     R_,V_,n_observed,slice_matrix,s_min = update_measure(partition_,sentAndReceived_,all_ind_mat,c_kappa,c_tau,c_sigma,c_alpha,c_beta)
 
     # Update partition
@@ -423,7 +424,7 @@ println(string("Starting Gibbs sample with ",n_iter," steps"))
       ind_clusterings[idx_clustering] = i
       for node_idx in 1:n
         weights = [sqrt(R_[c])*V_[c][node_idx] for c in sort_idx[1:min((2*K),length(R_))]]
-        clusterings[node_idx,idx_clustering] = indmax(weights)
+        clusterings[node_idx,idx_clustering] = argmax(weights)
       end
       idx_clustering += 1
     end
