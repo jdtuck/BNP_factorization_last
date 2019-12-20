@@ -277,7 +277,7 @@ end
   global c_alpha
   global c_beta
   global pred_average_vect
-  global pred_average_vect_burn
+    global pred_average_vect_burn
 
   # Update measure
   R_,V_,n_observed,slice_matrix,s_min = update_measure(partition_,sentAndReceived_,all_ind_mat,c_kappa,c_tau,c_sigma,c_alpha,c_beta)
